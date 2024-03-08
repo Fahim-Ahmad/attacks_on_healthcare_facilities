@@ -111,7 +111,7 @@ main_report_func <- function(tbl = summary_all, data = df, years = c(year1, year
   result <- HTML(
     glue::glue("
                               <br>
-                              <p><span style='font-size:22px; color:orange'>{n_attacks}</span>attacks been reported on healthcare facilities {year_report}.</p>
+                              <p><span style='font-size:22px; color:orange'>{n_attacks}</span> attacks have been reported on healthcare facilities {year_report}.</p>
                               <p>The number of reported casualties is <span style='font-size:22px; color:orange'>{n_casualties}</span> (injured = {n_injured}, death = {n_death}).</p>
                               <p>Besides, <span style='font-size:22px; color:orange'>{n_hw}</span> health workers and <span style='font-size:22px; color:orange'>{n_patient}</span> patients have been abducted, arrested, or detained.</p>
                               <br>
@@ -164,7 +164,7 @@ country_report_func <- function(tbl = summary_all, data = df, selected_country) 
   
   result <- HTML(
     glue::glue("
-        <h3>Casualties to attacks ratio: 1:{round(table$casualty_death_ratio, 2)}</h3>
+        <h3>Casualties to attacks ratio: {round(table$casualty_death_ratio, 2)}:1</h3>
         <br>
         <p>Overall, <b>{table$total_attacks}</b> attacks have happened on healthcare facilities in {selected_country}.
         The number of reported casualties is <b>{table$total_injured+table$total_death}</b> (injured = {table$total_injured}, death = {table$total_death}).</p>
