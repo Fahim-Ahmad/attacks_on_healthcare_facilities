@@ -10,6 +10,9 @@ df <- df %>%
   `Certainty Level` = ifelse(`Certainty Level` == "Confirmed", "Confirmed", "Not Confirmed")
 )
 
+start_date <- glue::glue("{min(df$month)}.{min(df$year)}")
+end_date <- glue::glue("{max(df$month)}.{max(df$year)}")
+
 split_attack_types_func <- function(attack_type) {
   unlist(strsplit(attack_type, ",(?![^()]*\\))(?=\\s*[A-Z])", perl=TRUE))
 }

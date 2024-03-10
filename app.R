@@ -2,6 +2,8 @@ library(shinydashboard)
 library(shiny)
 library(tidyverse)
 library(highcharter)
+library(rmarkdown)
+library(glue)
 
 source("global.R")
 
@@ -62,14 +64,8 @@ ui <- dashboardPage(
                tabPanel("Total Deaths", value = "total_death"),
                tabPanel("Total Casualties", value = "total_casualties"),
                tabPanel('Health Workers Abduction/Arrest/Detention', value = "hw_abduction/arrest/detention"),
-               # tabPanel('Health Workers Abduction', value = "hw_abduction"),
-               # tabPanel('Health Workers Arrest', value = "hw_arrest"),
-               # tabPanel('Health Workers Detention', value = "hw_detention"),
                tabPanel('Patient Abduction/Arrest/Detention', value = "patient_abduction/arrest/detention"),
-               # tabPanel('Patient Abduction', value = "patient_abduction"),
-               # tabPanel('Patient Arrest', value = "patient_arrest"),
-               # tabPanel('Patient Detention', value = "patient_detention"),
-               # tabPanel('About the data', value = "about")
+               tabPanel('About the data', value = "about"),
                ),
              uiOutput("plot_report")
              ),
@@ -208,7 +204,7 @@ server <- function(input, output, session){
     
     if (!is.null(input$select_attack_type) | !is.null(input$select_certainty_level)) {
       tagList(
-        div(style = "background:#ffa5a1; margin:0 10px 10px 10px; padding:10px 20px 10px 20px",
+        div(style = "background:#fec4c1; margin:0 10px 10px 10px; padding:10px 20px 10px 20px",
             HTML(
               glue::glue("The data is filtered for:<br>
                          <ul>
@@ -223,11 +219,6 @@ server <- function(input, output, session){
     }
     
   })
-  observe({
-    if (!is.null(input$tabs)) {
-      updateTabsetPanel(session, "tabs", selected = input$tabs)
-    }
-  })
   
   chart_type <- reactiveValues(type = "by_year")
   observeEvent(input$map_link, {chart_type$type <- "map"})
@@ -241,21 +232,47 @@ server <- function(input, output, session){
       
       if (input$tabs != "about") {
         tagList(
-          column(7, plot_wrapper_func(tbl = summary_all(), indicator = indicator, type = type)),
-          column(5, main_report_func(summary_all(), data = df(), years = c(input$select_year[1], input$select_year[2]))),
-          column(7, offset = 5,
-                 # actionLink("map_link", "Map", style = ifelse(type == "map", "color:#007BBB;", "color: gray;")),
-                 # " | ",
-                 actionLink("year_link", "By Year", style = ifelse(type == "by_year", "color:#007BBB;", "color: gray;")),
-                 " | ",
-                 actionLink("country_link", "By Country", style = ifelse(type == "by_country", "color:#007BBB;", "color: gray;"))
-          )
+          column(7,
+                 column(12, plot_wrapper_func(tbl = summary_all(), indicator = indicator, type = type)),
+                 column(12, offset = 10,
+                        # actionLink("map_link", "Map", style = ifelse(type == "map", "color:#007BBB;", "color: gray;")),
+                        # " | ",
+                        actionLink("year_link", "By Year", style = ifelse(type == "by_year", "color:#007BBB;", "color: gray;")),
+                        " | ",
+                        actionLink("country_link", "By Country", style = ifelse(type == "by_country", "color:#007BBB;", "color: gray;"))
+                        )
+                 ),
+          column(5, main_report_func(summary_all(), data = df(), years = c(input$select_year[1], input$select_year[2])))
         )
       } else {
-        helpText("placeholder...")
+        showModal(
+          modalDialog(
+            div(style = "margin:20px",
+                includeMarkdown(
+                  rmarkdown::render(
+                    input = "data_source.Rmd", 
+                    output_format = "html_document",
+                    params = list(start = start_date,
+                                  end = end_date),
+                    run_pandoc = FALSE,
+                    quiet = TRUE,
+                    envir = new.env(parent = globalenv())
+                  )
+                )
+            ),
+            footer = shiny::actionButton(inputId = "close_modal", label = "close"),
+            size = "l",
+            easyClose = FALSE
+          )
+        )
       }
       
     })
+  })
+  
+  observeEvent(input$close_modal, {
+    removeModal()
+    updateTabsetPanel(session, "tabs", selected = "total_attacks")
   })
 
 }

@@ -1,0 +1,25 @@
+---
+title: ""
+output: html_document
+params:
+  start: ""
+  end: ""
+---
+
+#### Source:
+
+Surveillance system for attacks in health care (SSA): methodology. Geneva: World Health Organization; 2018. Licence: CC BY-NC-SA 3.0 IGO.
+
+Data collected by World Health Organization(WHO): [SSA Data Report](https://extranet.who.int/ssa/LeftMenu/PublicReportList.aspx?start=2024-01-01&end=2024-03-09&countryList=0&typeList=0)
+
+The SSA methodology paper can be downloaded from [WHO's publication platform](https://www.who.int/publications/i/item/surveillance-system-for-attacks-on-health-care-(-ssa)).
+
+<br>
+
+#### Data Timeline:
+
+The reported data is between `r params$start` - `r params$end`.
+
+
+
+
