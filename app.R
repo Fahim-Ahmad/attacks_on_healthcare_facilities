@@ -248,17 +248,17 @@ server <- function(input, output, session){
         showModal(
           modalDialog(
             div(style = "margin:20px",
-                includeMarkdown(
-                  rmarkdown::render(
-                    input = "data_source.Rmd", 
-                    output_format = "html_document",
-                    params = list(start = start_date,
-                                  end = end_date),
-                    run_pandoc = FALSE,
-                    quiet = TRUE,
-                    envir = new.env(parent = globalenv())
-                  )
-                )
+                HTML(glue::glue(
+                  "<h4>Source:</h4>
+                  Surveillance system for attacks in health care (SSA): methodology. Geneva: World Health Organization; 2018. Licence: CC BY-NC-SA 3.0 IGO.
+                  <br>
+                  Data collected by World Health Organization(WHO): <a href='https://extranet.who.int/ssa/LeftMenu/PublicReportList.aspx?start=2024-01-01&end=2024-03-09&countryList=0&typeList=0'>SSA Data Report</a>
+                  <br>
+                  The SSA methodology paper can be downloaded from <a href='https://www.who.int/publications/i/item/surveillance-system-for-attacks-on-health-care-(-ssa)'>WHO's publication platform</a>.
+                  <br><br>
+                  <h4>Data Timeline:</h4>
+                  The reported data is between {start_date} - {end_date}"
+                ))
             ),
             footer = shiny::actionButton(inputId = "close_modal", label = "close"),
             size = "l",
