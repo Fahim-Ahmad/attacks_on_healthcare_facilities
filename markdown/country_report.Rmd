@@ -1,0 +1,64 @@
+---
+title: "country report"
+output: html_document
+params:
+  df: ""
+  selected_country: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+
+```{r }
+source("../functions.R")
+
+df <- params$df
+selected_country <- params$selected_country
+
+tbl <- summary_all_func(df %>% filter(`Country / Territory` == selected_country))
+# table <- summary_country_func(tbl = summary_all_func(df), selected_country = selected_country)
+common_attacks <- common_attack_types_func(tbl = df, selected_country = selected_country) %>% head(5)
+
+```
+
+```{r}
+n_attacks <- sum(tbl$total_attacks)
+n_casualties <- sum(tbl$total_casualties)
+n_injured <- sum(tbl$total_injured)
+n_death <- sum(tbl$total_death)
+n_hw <- sum(tbl$`hw_abduction/arrest/detention`)
+n_patient <- sum(tbl$`patient_abduction/arrest/detention`)
+n_casualty_death_ratio <- n_casualties / n_attacks
+
+```
+
+
+### Casualties to attacks ratio: `r round(n_casualty_death_ratio, 2)`:1
+
+Overall, **`r n_attacks`** attacks have been reported on healthcare facilities in `r selected_country`.
+The number of reported casualties is **`r n_casualties`** (injuries = `r n_injured`, deaths = `r n_death`).
+
+Moreover, **`r n_hw`** health workers and **`r n_patient`** patients have been abducted, arrested, or detained.
+
+Common attack types that occurred in `r selected_country` are:
+
+```{r results='asis'}
+cat("<ul>")
+
+for (i in 1:nrow(common_attacks)) {
+  result <- glue::glue("<li>{common_attacks[i,]$attack_type}: {common_attacks[i,]$Freq}</li>")
+  cat(result)
+}
+  
+cat("</ul>")
+```
+
+
+
+

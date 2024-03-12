@@ -30,3 +30,28 @@ rm(attack, i, result, split_attack_types_func)
 
 ##### custom functions ---------------------------------------------------------
 source("functions.R")
+
+##### markdown files ---------------------------------------------------------
+
+# rmarkdown::render(
+#   input = "markdown/data_source.Rmd",
+#   output_format = "html_document",
+#   params = list(start = start_date,
+#                 end = end_date),
+#   output_file = "data_source"
+# )
+
+# rmarkdown::render(
+#   input = "markdown/main_report.Rmd",
+#   output_format = "html_document",
+#   params = list(df = df),
+#   output_file = "main_report"
+# )
+ 
+# rmarkdown::render(
+#   input = "markdown/country_report.Rmd",
+#   output_format = "html_document",
+#   params = list(df = df, selected_country = "Afghanistan"),
+#   output_file = "country_report"
+# )
+

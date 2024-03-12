@@ -1,0 +1,65 @@
+---
+title: "main report"
+output: html_document
+params:
+  df: ""
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = FALSE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+```{r }
+source("../functions.R")
+
+df <- params$df
+
+tbl <- summary_all_func(df)
+common_attacks <- common_attack_types_func(tbl = df, selected_country = NULL)
+```
+
+```{r }
+n_attacks <- sum(tbl$total_attacks)
+n_casualties <- sum(tbl$total_casualties)
+n_injured <- sum(tbl$total_injured)
+n_death <- sum(tbl$total_death)
+n_hw <- sum(tbl$`hw_abduction/arrest/detention`)
+n_patient <- sum(tbl$`patient_abduction/arrest/detention`)
+
+year1 = min(df$year)
+year2 = max(df$year)
+
+if (year1 != year2) {
+  year_report <- glue::glue("between {year1} and {year2}")
+  } else {
+  year_report <- glue::glue("in {year1}")
+}
+
+```
+
+
+<span style='font-size:22px; color:orange'>`r n_attacks` </span> attacks have been reported on healthcare facilities `r year_report`.
+
+The number of reported casualties is <span style='font-size:22px; color:orange'>`r n_casualties`</span> (injuries = `r n_injured`, deaths = `r n_death`).
+
+Besides, <span style='font-size:22px; color:orange'>`r n_hw`</span> health workers and <span style='font-size:22px;color:orange'>`r n_patient`</span> patients have been abducted, arrested, or detained.
+
+The most common reported attack types are:
+
+
+```{r results='asis'}
+cat("<ul>")
+
+for (i in 1:nrow(common_attacks)) {
+  result <- glue::glue("<li>{common_attacks[i,]$attack_type}: {common_attacks[i,]$Freq}</li>")
+  cat(result)
+}
+  
+cat("</ul>")
+```
+
+
