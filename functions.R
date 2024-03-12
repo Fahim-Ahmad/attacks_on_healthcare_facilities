@@ -1,6 +1,6 @@
 ##### custom functions
-summary_all_func <- function(tbl) {
-  summary_attacks <- tbl %>%
+summary_all_func <- function(data = df) {
+  summary_attacks <- data %>%
     group_by(
       year,
       month,
@@ -8,7 +8,7 @@ summary_all_func <- function(tbl) {
     ) %>%
     tally(name = "total_attacks")
   
-  summary_all <- tbl %>%
+  summary_all <- data %>%
     group_by(
       year,
       month,
@@ -37,29 +37,33 @@ summary_all_func <- function(tbl) {
   return(summary_all)
 }
 
-# summary_all <- summary_all_func(df)
+# summary_all_func(data = df)
 
-common_attack_types_func <- function(tbl, selected_country = NULL) {
+common_attack_types_func <- function(data = df, selected_country = NULL) {
   
   if (is.null(selected_country)) {
-    table <- tbl
+    table <- data
   } else {
-    table <- tbl %>% 
+    table <- data %>% 
       filter(`Country / Territory` == selected_country)
   }
   
   table %>%
-    select(attack_types) %>% 
+    select(all_of(attack_types)) %>% 
     summarise(across(everything(), ~ sum(.x))) %>%
     pivot_longer(cols = everything(), names_to = "attack_type", values_to = "Freq") %>% 
     filter(Freq >0) %>% 
     arrange(-Freq)
 }
 
-# common_attack_types_func(tbl = df, selected_country = "Afghanistan")
-# common_attack_types_func(tbl = df, selected_country = NULL)
+# common_attack_types_func(data = df, selected_country = "Afghanistan")
+# common_attack_types_func(data = df, selected_country = NULL)
 
-main_report_func <- function(tbl = summary_all, data = df, years = c(year1, year2)) {
+main_report_func <- function(data = df) {
+  
+  tbl <- summary_all_func(data)
+  common_attacks <- common_attack_types_func(data = data, selected_country = NULL)
+  
   n_attacks <- sum(tbl$total_attacks)
   n_casualties <- sum(tbl$total_casualties)
   n_injured <- sum(tbl$total_injured)
@@ -67,16 +71,14 @@ main_report_func <- function(tbl = summary_all, data = df, years = c(year1, year
   n_hw <- sum(tbl$`hw_abduction/arrest/detention`)
   n_patient <- sum(tbl$`patient_abduction/arrest/detention`)
   
-  year1 = years[1]
-  year2 = years[2]
+  year1 = min(data$year)
+  year2 = max(data$year)
   
   if (year1 != year2) {
     year_report <- glue::glue("between {year1} and {year2}")
   } else {
     year_report <- glue::glue("in {year1}")
   }
-  
-  common_attacks <- common_attack_types_func(tbl = data, selected_country = NULL)
   
   result <- HTML(glue::glue(
                             "<br>
@@ -101,44 +103,29 @@ main_report_func <- function(tbl = summary_all, data = df, years = c(year1, year
   
 }
 
-# main_report_func(tbl = summary_all, data = df, years = c(2017, 2024))
-# main_report_func(tbl = summary_all, data = df, years = c(2020, 2020))
+# main_report_func(data = df)
 
-summary_country_func <- function(tbl = summary_all, selected_country = NULL) {
+country_report_func <- function(data = df, selected_country) {
   
-  if (is.null(selected_country)) {
-    table <- tbl
-  } else {
-    table <- tbl %>% 
-      filter(country == selected_country)
-  }
+  tbl <- summary_all_func(data %>% filter(`Country / Territory` == selected_country))
+  common_attacks <- common_attack_types_func(data = data, selected_country = selected_country) %>% head(5)
   
-  table %>% 
-    ungroup() %>% 
-    select(-c(year, month, country)) %>% 
-    summarise_all(~sum(.)) %>% 
-    mutate(casualty_death_ratio = (total_injured + total_death) / total_attacks)
-  
-}
-
-# summary_country_func(tbl = summary_all, selected_country = "Afghanistan")
-# summary_country_func(tbl = summary_all, selected_country = NULL)
-
-country_report_func <- function(tbl = summary_all, data = df, selected_country) {
-  
-  selected_country <- selected_country
-  table <- summary_country_func(tbl = tbl, selected_country = selected_country)
-  common_attacks <- common_attack_types_func(tbl = data, selected_country = selected_country) %>% 
-    head(5)
+  n_attacks <- sum(tbl$total_attacks)
+  n_casualties <- sum(tbl$total_casualties)
+  n_injured <- sum(tbl$total_injured)
+  n_death <- sum(tbl$total_death)
+  n_hw <- sum(tbl$`hw_abduction/arrest/detention`)
+  n_patient <- sum(tbl$`patient_abduction/arrest/detention`)
+  n_casualty_death_ratio <- n_casualties / n_attacks
   
   result <- HTML(
     glue::glue("
-        <h3>Casualties to attacks ratio: {round(table$casualty_death_ratio, 2)}:1</h3>
+        <h3>Casualties to attacks ratio: {round(n_casualty_death_ratio, 2)}:1</h3>
         <br>
-        <p>Overall, <b>{table$total_attacks}</b> attacks have happened on healthcare facilities in {selected_country}.
-        The number of reported casualties is <b>{table$total_injured+table$total_death}</b> (injured = {table$total_injured}, death = {table$total_death}).</p>
+        <p>Overall, <b>{n_attacks}</b> attacks have been reported on healthcare facilities in {selected_country}.
+        The number of reported casualties is <b>{n_casualties}</b> (injuries = {n_injured}, death = {n_death}).</p>
         <br>
-        <p>Moreover, <b>{table$hw_abduction+table$hw_arrest+table$hw_detention}</b> health workers and <b>{table$patient_abduction+table$patient_arrest+table$patient_detention}</b> patients have been abducted, arrested, or detained.</p>
+        <p>Moreover, <b>{n_hw}</b> health workers and <b>{n_patient}</b> patients have been abducted, arrested, or detained.</p>
         <br>
         <p>Common attack types that occurred in {selected_country} are:</p>
         <ul>
@@ -157,10 +144,10 @@ country_report_func <- function(tbl = summary_all, data = df, selected_country) 
   return(result)
 }
 
-# country_report_func(tbl = summary_all, data = df, selected_country = "Afghanistan")
+# country_report_func(data = df, selected_country = "Afghanistan")
 
-summary_table_func <- function(tbl = summary_all, indicator = "total_injured", wider = TRUE) {
-  table <- tbl %>%
+summary_indicator_func <- function(data = df, indicator = "total_injured", wider = TRUE) {
+  table <-  summary_all_func(data) %>%
     group_by(
       year,
       month,
@@ -181,44 +168,12 @@ summary_table_func <- function(tbl = summary_all, indicator = "total_injured", w
   return(table)
 }
 
-# summary_table_func(tbl = summary_all, indicator = "total_injured")
-# summary_table_func(tbl = summary_all, indicator = "total_injured", wider = FALSE)
+# summary_indicator_func(data = df, indicator = "total_injured")
+# summary_indicator_func(data = df, indicator = "total_injured", wider = FALSE)
 
-# custom_table <- function(table, show_btns = FALSE) {
-#   options <- if (show_btns) {
-#     list(
-#       dom = 'tB',
-#       buttons = c('copy', 'csv', 'excel'),
-#       searching = FALSE,
-#       lengthChange = FALSE,
-#       paging = FALSE,
-#       columnDefs = list(
-#         list(targets = "_all", className = "dt-left")
-#       ),
-#       initComplete = JS('function(settings, json) { $(this.api().table().node()).css("width", "100%"); }')
-#     )
-#   } else {
-#     list(
-#       dom = 't',
-#       buttons = c('copy', 'csv', 'excel'),
-#       searching = FALSE,
-#       lengthChange = FALSE,
-#       paging = FALSE,
-#       columnDefs = list(
-#         list(targets = "_all", className = "dt-left")
-#       ),
-#       initComplete = JS('function(settings, json) { $(this.api().table().node()).css("width", "100%"); }')
-#     )
-#   }
-#   
-#   datatable(table, rownames = FALSE, extensions = c('Buttons'), options = options)
-# }
-# summary_table_func(tbl = summary_all, indicator = "total_injured") %>%
-#   custom_table(show_btns = TRUE)
-
-plot_line_func <- function(tbl = summary_all, indicator = "total_injured") {
+plot_line_func <- function(data = df, indicator = "total_injured") {
   
-  table <- summary_table_func(tbl, indicator, wider = FALSE) %>% 
+  table <- summary_indicator_func(data, indicator, wider = FALSE) %>% 
     mutate(year_month = paste0(year, "-", month))
   
   type <- ifelse(length(unique(table$year)) > 1, "line", "column")
@@ -236,12 +191,12 @@ plot_line_func <- function(tbl = summary_all, indicator = "total_injured") {
   
 }
 
-# plot_line_func(tbl = summary_all, indicator = "total_injured")
-# plot_line_func(tbl = summary_all%>% filter(year == 2017), indicator = "total_injured")
+# plot_line_func(data = df, indicator = "total_injured")
+# plot_line_func(data = df %>% filter(year == 2017), indicator = "total_injured")
 
-plot_countries_bar_func <- function(tbl = summary_all, indicator = "total_injured") {
+plot_countries_bar_func <- function(data = df, indicator = "total_injured") {
   
-  table <- tbl %>%
+  table <- summary_all_func(data) %>%
     group_by(country) %>%
     summarise(
       n = sum(!!sym(indicator))
@@ -267,32 +222,32 @@ plot_countries_bar_func <- function(tbl = summary_all, indicator = "total_injure
   
 }
 
-# plot_countries_bar_func(tbl = summary_all, indicator = "total_attacks")
-# plot_countries_bar_func(tbl = summary_all, indicator = "total_injured")
-# plot_countries_bar_func(tbl = summary_all, indicator = "patient_arrest")
+# plot_countries_bar_func(data = df, indicator = "total_attacks")
+# plot_countries_bar_func(data = df, indicator = "total_injured")
+# plot_countries_bar_func(data = df, indicator = "patient_arrest")
 
 # library(ggplot2)
 # library(plotly)
-# plot_map_func <- function(tbl = summary_all, indicator = "total_injured") {
-#   
-#   table <- tbl %>%
+# plot_map_func <- function(data = df, indicator = "total_injured") {
+# 
+#   table <- summary_all_func(data) %>%
 #     group_by(country) %>%
 #     summarise(
 #       n = sum(!!sym(indicator))
 #     )
-#   
-#   map_table <- map_data("world") %>% 
-#     filter(region != "Antarctica") %>% 
+# 
+#   map_table <- map_data("world") %>%
+#     filter(region != "Antarctica") %>%
 #     mutate(region = case_when(
 #       region == "Syria" ~ "Syrian Arab Republic",
 #       region == "Palestine" ~ "occupied Palestinian territory",
 #       TRUE ~ region
-#     )) %>% 
+#     )) %>%
 #     left_join(
 #       table,
 #       by = c("region" = "country")
 #     )
-#   
+# 
 #   ggplotly(
 #     ggplot(map_table, aes(long, lat, group = group,
 #                          text = paste("Country: ", region, "<br>N: ", n)
@@ -309,67 +264,27 @@ plot_countries_bar_func <- function(tbl = summary_all, indicator = "total_injure
 #     tooltip = "text"
 #   ) %>%
 #     layout(legend = list(orientation = "h", x = 0.5, y = -0.1))
-#   
+# 
 # }
 # 
-# plot_map_func(tbl = summary_all, indicator = "total_attacks")
+# plot_map_func(data = df, indicator = "total_attacks")
 
-plot_wrapper_func <- function(tbl, indicator, type) {
+plot_wrapper_func <- function(data, indicator, type) {
   if(type == "map") {
-    plot_map_func(tbl, indicator)
+    plot_map_func(data, indicator)
   } else if (type == "by_year") {
-    plot_line_func(tbl, indicator)
+    plot_line_func(data, indicator)
   } else if (type == "by_country") {
-    plot_countries_bar_func(tbl, indicator)
+    plot_countries_bar_func(data, indicator)
   }
 }
 
-# plot_wrapper_func(tbl = summary_all, indicator = "total_attacks", type = "by_year")
-# plot_wrapper_func(tbl = summary_all %>% filter(year == 2018), indicator = "total_attacks", type = "by_year")
-# plot_wrapper_func(tbl = summary_all, indicator = "total_attacks", type = "by_country")
-# plot_wrapper_func(tbl = summary_all, indicator = "total_attacks", type = "map")
-
-# summary_country_plot_func <- function(tbl, selected_country, title = "Casualties to Attacks ratio") {
-#   table <- summary_country_func(tbl = tbl, selected_country = selected_country)
-#   red_to_yellow_palette <- colorRampPalette(c("red", "yellow"))
-#   
-#   table %>% 
-#     select(-casualty_death_ratio) %>% 
-#     mutate(grp = "grp") %>% 
-#     pivot_longer(-grp, names_to = "ind", values_to = "n") %>% 
-#     mutate(
-#       ind = case_match(ind,
-#                        c("hw_abduction", "hw_arrest", "hw_detention") ~ "4) HW Abduction / Arrest / Detention",
-#                        c("patient_abduction", "patient_arrest", "patient_detention") ~ "5) Patient Abduction / Arrest / Detention",
-#                        "total_attacks" ~ "1) Total Attacks",
-#                        "total_injured" ~ "2) Total Injured",
-#                        "total_death" ~ "3) Total Death",
-#                        .default = ind
-#       )
-#     ) %>% 
-#     group_by(ind) %>% 
-#     summarise(n = sum(n)) %>% 
-#     mutate(color = red_to_yellow_palette(nrow(.))) %>% 
-#     hchart('column', hcaes(x = ind, y = n, color = color)) %>%
-#     hc_exporting(enabled = TRUE, filename = "barchart") %>% 
-#     hc_xAxis(title = NULL) %>% 
-#     hc_yAxis(title = list(text = "Count")) %>% 
-#     hc_title(
-#       text = glue::glue("<p>{title} 1:{round(table$casualty_death_ratio, 2)}</p>"),
-#       margin = 20,
-#       align = "left",
-#       style = list(color = "gray", useHTML = TRUE)
-#     )
-# }
-
-# summary_country_plot_func(tbl = summary_all, selected_country = "Afghanistan")
+# plot_wrapper_func(data = df, indicator = "total_attacks", type = "by_year")
+# plot_wrapper_func(data = df %>% filter(year == 2018), indicator = "total_attacks", type = "by_year")
+# plot_wrapper_func(data = df, indicator = "total_attacks", type = "by_country")
+# # plot_wrapper_func(data = df, indicator = "total_attacks", type = "map")
 
 ##### extra ---------------------------------------------------------
 # Nagorno-Karabakh
 
-# ggplot() +
-#   geom_polygon(data = world_map, aes(x = long, y = lat, group = group, fill = n), color = "gray", show.legend = F) +
-#   scale_fill_gradient(low = "lightblue", high = "darkblue", name = "Count") +
-#   coord_equal() +
-#   theme_void()
 

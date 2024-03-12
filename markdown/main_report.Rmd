@@ -18,8 +18,8 @@ source("../functions.R")
 
 df <- params$df
 
-tbl <- summary_all_func(df)
-common_attacks <- common_attack_types_func(tbl = df, selected_country = NULL)
+tbl <- summary_all_func(data = df)
+common_attacks <- common_attack_types_func(data = df, selected_country = NULL)
 ```
 
 ```{r }

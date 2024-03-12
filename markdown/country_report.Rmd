@@ -21,9 +21,8 @@ source("../functions.R")
 df <- params$df
 selected_country <- params$selected_country
 
-tbl <- summary_all_func(df %>% filter(`Country / Territory` == selected_country))
-# table <- summary_country_func(tbl = summary_all_func(df), selected_country = selected_country)
-common_attacks <- common_attack_types_func(tbl = df, selected_country = selected_country) %>% head(5)
+tbl <- summary_all_func(data = df %>% filter(`Country / Territory` == selected_country))
+common_attacks <- common_attack_types_func(data = df, selected_country = selected_country) %>% head(5)
 
 ```
 

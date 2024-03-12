@@ -107,7 +107,7 @@ server <- function(input, output, session){
   })
 
   summary_all <- reactive({
-    summary_all_func(df())
+    summary_all_func(data = df())
   })
   
   output$value_boxes <- renderUI({
@@ -149,7 +149,7 @@ server <- function(input, output, session){
   })
   
   output$compare_country_report <- renderUI({
-    country_report_func(tbl = summary_all(), data = df(), selected_country = input$country1)
+    country_report_func(data = df(), selected_country = input$country1)
   })
   
   output$compare_country_select2 <- renderUI({
@@ -169,7 +169,7 @@ server <- function(input, output, session){
   })
   
   output$compare_country_report2 <- renderUI({
-    country_report_func(tbl = summary_all(), data = df(), selected_country = input$country2)
+    country_report_func(data = df(), selected_country = input$country2)
   })
   
   output$compare_country1 <- renderUI({
@@ -233,7 +233,7 @@ server <- function(input, output, session){
       if (input$tabs != "about") {
         tagList(
           column(7,
-                 column(12, plot_wrapper_func(tbl = summary_all(), indicator = indicator, type = type)),
+                 column(12, plot_wrapper_func(data = df(), indicator = indicator, type = type)),
                  column(12, offset = 10,
                         # actionLink("map_link", "Map", style = ifelse(type == "map", "color:#007BBB;", "color: gray;")),
                         # " | ",
@@ -242,7 +242,7 @@ server <- function(input, output, session){
                         actionLink("country_link", "By Country", style = ifelse(type == "by_country", "color:#007BBB;", "color: gray;"))
                         )
                  ),
-          column(5, main_report_func(summary_all(), data = df(), years = c(input$select_year[1], input$select_year[2])))
+          column(5, main_report_func(data = df()))
         )
       } else {
         showModal(
